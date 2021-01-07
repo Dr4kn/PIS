@@ -26,12 +26,12 @@ public class LaunchClient
 
             if (command.equals("quit")) break;
 
+            // sends out to the server rewrite as necessary
             out.println(command);
 
-
+            // the server response get it to whichever way is necessary to display the things properly
             String serverResponse = input.readLine();
-            // use serverResponse in another class to make the client do its things
-            // this way i can edit this class later without causing problems in your code
+
             System.out.println("Server: " + serverResponse);
         }
     }
