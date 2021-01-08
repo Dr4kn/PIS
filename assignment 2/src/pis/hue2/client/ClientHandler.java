@@ -27,14 +27,7 @@ public class ClientHandler implements Runnable
             while (true)
             {
                 String request = in.readLine();
-                if (request.contains("test"))
-                {
-                    out.println("test was successful");
-                }
-                else
-                {
-                    out.println("You typed: " + request);
-                }
+                instruction(request);
             }
         }
         catch (IOException e)
@@ -53,6 +46,136 @@ public class ClientHandler implements Runnable
             {
                 e.printStackTrace();
             }
+        }
+    }
+
+    public void closeSocket()
+    {
+        out.close();
+        try
+        {
+            in.close();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    public void instruction(String instruction)
+    {
+        switch (instruction)
+        {
+            /**
+             * CONNECT
+             * connection request
+             * usage: CON
+             */
+            case "CON":
+                System.out.println("CON");
+                // send ACK if success
+                out.println("ACK");
+                System.out.println("Client accepted");
+
+                // send DND if unsuccessful
+                break;
+
+            /**
+             * DISCONNECT
+             * disconnect notification
+             * usage: DSC
+             */
+            case "DSC":
+                out.println("DSC");
+                closeSocket();
+                System.out.println("Client disconnected");
+                break;
+
+            /**
+             * ACKNOWLEDGED
+             * operation acknowledgement
+             * usage: ACK
+             */
+            case "ACK":
+                out.println("ACK");
+                System.out.println("ACK");
+                break;
+
+            /**
+             * DENIED
+             * negative operation acknowledgement
+             * usage: DND
+             */
+            case "DND":
+                out.println("DND");
+                System.out.println("DND: 3 Clients are already connected");
+                break;
+
+//            /**
+//             * LIST
+//             * list a directory
+//             * usage: LST
+//             **/
+//            case "LST":
+//                System.out.println("LST");
+//                // send ACK
+//                // wait for ACK
+//                // send DAT
+//                // wait for ACK
+//                break;
+//
+//            /**
+//             * UPLOAD
+//             * upload a file
+//             * usage: PUT <filename : string>
+//             */
+//            case "PUT":
+//                System.out.println("PUT");
+//                // send ACK
+//                // wait for DAT
+//                // send ACK
+//                // send DND if unsuccessful
+//                break;
+//
+//            /**
+//             * DOWNLOAD
+//             * download a file
+//             * usage: GET <filename : string>
+//             */
+//            case "GET":
+//                System.out.println("GET");
+//                // send ACK
+//                // wait for ACK
+//                // send DAT
+//                // wait for ACK
+//                // send DND if unsuccessful
+//                break;
+//
+//            /**
+//             * DELETE
+//             * delete a file
+//             * usage: DEL <filename : string>
+//             */
+//            case "DEL":
+//                System.out.println("DEL");
+//                // send ACK if success
+//                // send DND if unsuccessful
+//                break;
+//
+//            /**
+//             * DATA
+//             * encapsulates the data to be transmitted
+//             * usage: DAT <length : string (long)> <data : byte[]>
+//             */
+//            case "DAT":
+//                System.out.println("DAT");
+//                break;
+
+            default:
+                out.println("404");
+                System.out.println(instruction);
+                System.out.println("Error: Command not recognised");
+                break;
         }
     }
 }
