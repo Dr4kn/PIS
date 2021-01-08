@@ -1,7 +1,5 @@
 package pis.hue2.server;
 
-import pis.hue2.client.ClientHandler;
-
 import java.net.*;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
