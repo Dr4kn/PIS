@@ -7,15 +7,14 @@ import java.util.concurrent.Executors;
 
 public class LaunchServer
 {
-    private static int PORT = 42069;
+    private static final int PORT = 42069;
+    private static int numberOfClients = 0;
 
-    private static ArrayList<ClientHandler> clients = new ArrayList<>();
-    private static ExecutorService executorService = Executors.newFixedThreadPool(3);
+    private static final ArrayList<ClientHandler> clients = new ArrayList<>();
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     public static void main(String[] args) throws Exception
     {
-        int number;
-
         ServerSocket listener = new ServerSocket(PORT);
         System.out.println("Server is running");
 
@@ -28,5 +27,20 @@ public class LaunchServer
             clients.add(clientThread);
             executorService.execute(clientThread);
         }
+    }
+
+    public static int getNumberOfClients()
+    {
+        return numberOfClients;
+    }
+
+    public static void increaseNumberOfClients()
+    {
+        ++numberOfClients;
+    }
+
+    public static void decreaseNumberOfClients()
+    {
+        --numberOfClients;
     }
 }

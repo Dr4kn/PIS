@@ -2,11 +2,10 @@ package pis.hue2.client;
 
 import java.io.*;
 import java.net.*;
-import java.util.Scanner;
 
 public class LaunchClient
 {
-    private static int PORT = 42069;
+    private static final int PORT = 42069;
 
     public static void main(String[] args) throws Exception
     {

@@ -5,12 +5,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Arrays;
 
 public class ClientHandler implements Runnable
 {
     public Socket client;
-    private BufferedReader in;
-    private PrintWriter out;
+    private final BufferedReader in;
+    private final PrintWriter out;
 
     public  ClientHandler(Socket clientSocket) throws IOException
     {
@@ -33,7 +34,7 @@ public class ClientHandler implements Runnable
         catch (IOException e)
         {
             System.err.println("IO exception in client handler");
-            System.err.println(e.getStackTrace());
+            System.err.println(Arrays.toString(e.getStackTrace()));
         }
         finally
         {
@@ -45,6 +46,7 @@ public class ClientHandler implements Runnable
             catch (IOException e)
             {
                 e.printStackTrace();
+                System.out.println("IOException in run");
             }
         }
     }
@@ -59,6 +61,7 @@ public class ClientHandler implements Runnable
         catch (IOException e)
         {
             e.printStackTrace();
+            System.out.println("IOException in closeSocket");
         }
     }
 
@@ -66,21 +69,29 @@ public class ClientHandler implements Runnable
     {
         switch (instruction)
         {
-            /**
+            /*
              * CONNECT
              * connection request
              * usage: CON
              */
             case "CON":
-                System.out.println("CON");
-                // send ACK if success
-                out.println("ACK");
-                System.out.println("Client accepted");
+                System.out.println("Number of Clients: " + LaunchServer.getNumberOfClients());
+                if (LaunchServer.getNumberOfClients() < 3)
+                {
+                    out.println("ACK");
+                    LaunchServer.increaseNumberOfClients();
+                    System.out.println("Client accepted");
+                }
+                else
+                {
+                    instruction("DND");
+                }
+
 
                 // send DND if unsuccessful
                 break;
 
-            /**
+            /*
              * DISCONNECT
              * disconnect notification
              * usage: DSC
@@ -88,10 +99,11 @@ public class ClientHandler implements Runnable
             case "DSC":
                 out.println("DSC");
                 closeSocket();
+                LaunchServer.decreaseNumberOfClients();
                 System.out.println("Client disconnected");
                 break;
 
-            /**
+            /*
              * ACKNOWLEDGED
              * operation acknowledgement
              * usage: ACK
@@ -101,14 +113,17 @@ public class ClientHandler implements Runnable
                 System.out.println("ACK");
                 break;
 
-            /**
+            /*
              * DENIED
              * negative operation acknowledgement
              * usage: DND
              */
             case "DND":
                 out.println("DND");
+                LaunchServer.decreaseNumberOfClients();
                 System.out.println("DND: 3 Clients are already connected");
+                closeSocket();
+                System.out.println("Client disconnected");
                 break;
 
 //            /**
@@ -173,8 +188,8 @@ public class ClientHandler implements Runnable
 
             default:
                 out.println("404");
-                System.out.println(instruction);
-                System.out.println("Error: Command not recognised");
+                System.out.print(instruction);
+                System.out.println(" | Error: Command not recognised");
                 break;
         }
     }
