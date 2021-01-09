@@ -15,7 +15,9 @@ public class LaunchClient
         BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-        while (true)
+        boolean isRunning = true;
+
+        while (isRunning)
         {
             System.out.print(">");
 
@@ -33,7 +35,7 @@ public class LaunchClient
                         System.out.println("Server: " + "Your connection was accepted.");
                     }
                     else if(serverResponseCON.equals("DND")){
-                        System.out.println("Server: " + "There was an error trying to connect to the server.");
+                        System.out.println("Server: " + "The server denied your request.");
                     }
                     else{
                         System.out.println("Server: " + "Didn't get your request.");
@@ -59,6 +61,7 @@ public class LaunchClient
                     String serverResponseDSC = input.readLine();
                     if(serverResponseDSC.equals("DSC")){
                         System.out.println("Server: " + "You were disconnected successfully.");
+                        isRunning = false;
                     }
                     else{
                         System.out.println("Server: " + "There was an error while trying to disconnect you.");
@@ -71,8 +74,11 @@ public class LaunchClient
                     if(serverResponseGET.equals("ACK")){
                         System.out.println("Server: " + "Your get request was accepted.");
                         out.println("ACK");
-                        String serverResponseGET2 = input.readLine(); // This is the data we wanted to get.
-                        out.println("ACK");
+                        String serverResponseGET2 = input.readLine();
+                        if(serverResponseGET2.equals("DAT")){
+                            // we get the data here
+                            out.println("ACK");
+                        }
                     }
                     else if(serverResponseGET.equals("DND")){
                         System.out.println("Server: " + "There was an error trying to get the file from the server.");
@@ -85,22 +91,36 @@ public class LaunchClient
                 case "LST":
                     out.println("LST");
                     String serverResponseLST = input.readLine();
-                    if(serverResponseLST.equals("DSC")){
-                        System.out.println("Server: " + "You were disconnected successfully.");
+                    if(serverResponseLST.equals("ACK")){
+                        System.out.println("Server: " + "You can now ACK our ACK.");
+                        out.println("ACK");
+                        String serverResponseLST2 = input.readLine();
+                        if(serverResponseLST2.equals("DAT")){
+                            //we get the data here
+                            out.println("ACK");
+                        }
                     }
                     else{
-                        System.out.println("Server: " + "There was an error while trying to disconnect you.");
+                        System.out.println("Server: " + "There was an error while trying to list the data.");
                     }
                     break;
 
                 case "PUT":
                     out.println("PUT");
                     String serverResponsePUT = input.readLine();
-                    if(serverResponsePUT.equals("DSC")){
-                        System.out.println("Server: " + "You were disconnected successfully.");
+                    if(serverResponsePUT.equals("ACK")){
+                        System.out.println("Server: " + "You can send data now.");
+                        out.println("DAT");
+                        String serverResponsePUT2 = input.readLine();
+                        if (serverResponsePUT2.equals("ACK")){
+                            System.out.println("Server: " + "Your data was put on the server.");
+                        }
+                    }
+                    else if(serverResponsePUT.equals("DND")){
+                        System.out.println("Server: " + "Request was denied.");
                     }
                     else{
-                        System.out.println("Server: " + "There was an error while trying to disconnect you.");
+                        System.out.println("Server: " + "There was an error while trying to put data on the server.");
                     }
 
                     break;
@@ -111,7 +131,7 @@ public class LaunchClient
 
             }
 
-            if (command.equals("quit")) break;
+
 
 
         }
