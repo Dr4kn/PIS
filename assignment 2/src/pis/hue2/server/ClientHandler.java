@@ -1,23 +1,33 @@
 package pis.hue2.server;
 
+import pis.hue2.fileSending.FileSender;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.channels.ScatteringByteChannel;
 import java.util.Arrays;
 
 public class ClientHandler implements Runnable
 {
     public Socket client;
-    private final BufferedReader in;
-    private final PrintWriter out;
+    private BufferedReader in;
+    private PrintWriter out;
 
-    public  ClientHandler(Socket clientSocket) throws IOException
+    public  ClientHandler(Socket clientSocket)
     {
-        this.client = clientSocket;
-        in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-        out = new PrintWriter(client.getOutputStream(), true);
+        try
+        {
+            this.client = clientSocket;
+            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            out = new PrintWriter(client.getOutputStream(), true);
+        }
+        catch (IOException e)
+        {
+            System.out.println("IO Exception in Client Handler constructor");
+        }
     }
 
     @Override
@@ -126,65 +136,80 @@ public class ClientHandler implements Runnable
                 System.out.println("Client disconnected");
                 break;
 
-//            /**
-//             * LIST
-//             * list a directory
-//             * usage: LST
-//             **/
-//            case "LST":
-//                System.out.println("LST");
-//                // send ACK
-//                // wait for ACK
-//                // send DAT
-//                // wait for ACK
-//                break;
-//
-//            /**
-//             * UPLOAD
-//             * upload a file
-//             * usage: PUT <filename : string>
+            /**
+             * LIST
+             * list a directory
+             * usage: LST
+             **/
+            case "LST":
+                System.out.println("LST");
+                // send ACK
+                // wait for ACK
+                // send DAT
+                // wait for ACK
+                break;
+
+            /**
+             * UPLOAD
+             * upload a file
+             * usage: PUT <filename : string>
+             */
+            case "PUT":
+                out.println("ACK");
+                try
+                {
+                    FileSender fileSender = new FileSender("testFiles/server/", client);
+                    fileSender.receiveFile();
+                    out.println("ACK");
+                }
+                catch(Exception e)
+                {
+                    out.println("DND");
+                    System.out.println("File Transfer went wrong");
+                }
+
+
+                // send ACK
+                // wait for DAT
+                // send ACK
+                // send DND if unsuccessful
+                break;
+
+            /**
+             * DOWNLOAD
+             * download a file
+             * usage: GET <filename : string>
+             */
+            case "GET":
+                System.out.println("GET");
+                // send ACK
+                // wait for ACK
+                // send DAT
+                // wait for ACK
+                // send DND if unsuccessful
+                break;
+
+            /**
+             * DELETE
+             * delete a file
+             * usage: DEL <filename : string>
+             */
+            case "DEL":
+                System.out.println("DEL");
+                // send ACK if success
+                // send DND if unsuccessful
+                break;
+
+            /**
+             * DATA
+             * encapsulates the data to be transmitted
+             * usage: DAT <length : string (long)> <data : byte[]>
 //             */
-//            case "PUT":
-//                System.out.println("PUT");
-//                // send ACK
-//                // wait for DAT
-//                // send ACK
-//                // send DND if unsuccessful
-//                break;
-//
-//            /**
-//             * DOWNLOAD
-//             * download a file
-//             * usage: GET <filename : string>
-//             */
-//            case "GET":
-//                System.out.println("GET");
-//                // send ACK
-//                // wait for ACK
-//                // send DAT
-//                // wait for ACK
-//                // send DND if unsuccessful
-//                break;
-//
-//            /**
-//             * DELETE
-//             * delete a file
-//             * usage: DEL <filename : string>
-//             */
-//            case "DEL":
-//                System.out.println("DEL");
-//                // send ACK if success
-//                // send DND if unsuccessful
-//                break;
-//
-//            /**
-//             * DATA
-//             * encapsulates the data to be transmitted
-//             * usage: DAT <length : string (long)> <data : byte[]>
-//             */
-//            case "DAT":
-//                System.out.println("DAT");
-//                break;
+            case "DAT":
+                System.out.println("DAT");
+
+                out.println("DAT");
+                break;
 
             default:
                 out.println("404");

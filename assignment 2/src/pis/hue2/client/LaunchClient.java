@@ -1,5 +1,7 @@
 package pis.hue2.client;
 
+import pis.hue2.fileSending.FileSender;
+
 import java.io.*;
 import java.net.*;
 
@@ -108,21 +110,25 @@ public class LaunchClient
                 case "PUT":
                     out.println("PUT");
                     String serverResponsePUT = input.readLine();
-                    if(serverResponsePUT.equals("ACK")){
-                        System.out.println("Server: " + "You can send data now.");
-                        out.println("DAT");
-                        String serverResponsePUT2 = input.readLine();
-                        if (serverResponsePUT2.equals("ACK")){
-                            System.out.println("Server: " + "Your data was put on the server.");
-                        }
-                    }
-                    else if(serverResponsePUT.equals("DND")){
-                        System.out.println("Server: " + "Request was denied.");
-                    }
-                    else{
-                        System.out.println("Server: " + "There was an error while trying to put data on the server.");
+
+                    if(serverResponsePUT.equals("ACK"))
+                    {
+                        FileSender fileSender = new FileSender("testFiles/client/test1.txt", socket);
+                        fileSender.sendFile();
                     }
 
+                    if(serverResponsePUT.equals("ACK"))
+                    {
+                        System.out.println("The File Transfer was successful");
+                    }
+                    else if(serverResponsePUT.equals("DND"))
+                    {
+                        System.out.println("File Transfer wasn't successful");
+                    }
+                    else
+                    {
+                        System.out.println("unknown command in put");
+                    }
                     break;
 
                 default:
@@ -130,10 +136,6 @@ public class LaunchClient
                     break;
 
             }
-
-
-
-
         }
     }
 }
