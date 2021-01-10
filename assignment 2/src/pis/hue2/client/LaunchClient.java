@@ -11,6 +11,7 @@ public class LaunchClient
     private static final String filePath = "testFiles/client/";
     private static String getFileName = "";
     private static String delFileName = "";
+    private static String putFileName = "";
     private static String command;
 
     public static void main(String[] args) throws Exception
@@ -67,6 +68,24 @@ public class LaunchClient
                 }
             }
 
+            if (command.contains("PUT"))
+            {
+                try
+                {
+                    StringBuilder putFile = new StringBuilder();
+                    for (char ch : command.substring(4).toCharArray())
+                    {
+                        putFile.append(ch);
+                    }
+                    putFileName = putFile.toString();
+                    command = command.split(" ")[0];
+                }
+                catch (StringIndexOutOfBoundsException e)
+                {
+                    System.out.println("Must Specify the File in the PUT Request");
+                }
+            }
+
             switch (command)
             {
                 case "CON":
@@ -89,6 +108,18 @@ public class LaunchClient
                     String serverResponseDEL = input.readLine();
                     if(serverResponseDEL.equals("ACK")){
                         System.out.println("Server: " + "Your delete request was accepted.");
+                        out.println("ACK");
+                        try
+                        {
+                            FileSender fileSender = new FileSender(filePath, socket);
+                            fileSender.deleteFile();
+                            out.println("ACK");
+                        }
+                        catch(Exception e)
+                        {
+                            out.println("DND");
+                            System.out.println("File Transfer went wrong");
+                        }
                     }
                     else if(serverResponseDEL.equals("DND")){
                         System.out.println("Server: " + "There was an error trying to delete the file from the server.");
@@ -171,13 +202,9 @@ public class LaunchClient
 
                     if(serverResponsePUT.equals("ACK"))
                     {
-                        FileSender fileSender = new FileSender(filePath + "test1.txt", socket);
-                        fileSender.sendFile();
-                    }
-
-                    if(serverResponsePUT.equals("ACK"))
-                    {
                         System.out.println("The File Transfer was successful");
+                        FileSender fileSender = new FileSender(filePath + putFileName, socket);
+                        fileSender.sendFile();
                     }
                     else if(serverResponsePUT.equals("DND"))
                     {
