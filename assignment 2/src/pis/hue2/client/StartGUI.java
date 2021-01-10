@@ -1,11 +1,14 @@
 package pis.hue2.client;
 
+
 public class StartGUI extends Thread
 {
     public void run()
     {
-        // something like this:
-        // GUIStart guiStart = new GUIStart()
-//        oder einfach das gui hier rein
+        try {
+            ClientGUI clientGUI = new ClientGUI();
+        } catch (Exception e) {
+           System.out.println(e);
+        }
     }
 }

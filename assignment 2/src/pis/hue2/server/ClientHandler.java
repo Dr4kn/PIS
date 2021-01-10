@@ -174,6 +174,8 @@ public class ClientHandler implements Runnable
                             pathName += pathNames[i] + "|";
                         }
 
+                        pathName = (pathName == null || pathName.length() == 0) ? pathName : (pathName.substring(0, pathName.length() - 1));
+
                         out.println(pathName);
                         if(in.readLine().equals("ACK"))
                         {
