@@ -3,36 +3,51 @@ package pis.hue2.client;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 
-public class ClientGUI {
+public class ClientGUI extends Thread
+{
     private JTextField InputField;
-    private JTextField OutputField;
     private JButton sendInputField;
     private JPanel ClientGUI;
-    ClientForGUI client = new ClientForGUI();
+    private JTextArea OutputTextArea;
 
-    public ClientGUI() throws Exception
+    public ClientGUI()
     {
         sendInputField.addActionListener(new sendInputButtonClicked());
     }
 
-    public static void main(String[] args) throws Exception {
+    public void run()
+    {
         JFrame frame = new JFrame("ClientGUI");
-        frame.setContentPane(new ClientGUI().ClientGUI);
+        frame.setContentPane(ClientGUI);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.pack();
         frame.setVisible(true);
-
     }
+
+
+
+    RequestHandler client;
+    {
+        try
+        {
+            client = new RequestHandler();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     private class sendInputButtonClicked implements ActionListener
     {
         @Override
         public void actionPerformed(ActionEvent e)
         {
+
             try
             {
-                OutputField.setText(client.runRequestByInput(InputField.getText()));
+                OutputTextArea.setText(client.runRequestByInput(InputField.getText()));
             }
             catch (Exception exception)
             {

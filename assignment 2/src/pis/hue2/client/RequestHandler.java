@@ -6,7 +6,8 @@ import java.io.*;
 import java.net.*;
 import java.net.Socket;
 
-public class ClientForGUI {
+public class RequestHandler
+{
     private static final int PORT = 42069;
     private static final String filePath = "testFiles/client/";
     private static String getFileName = "";
@@ -17,10 +18,10 @@ public class ClientForGUI {
     Socket socket = new Socket("localhost", PORT);
 
     BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-    BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
     PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-    public ClientForGUI() throws IOException {}
+    public RequestHandler() throws IOException {}
+
 
     public String runRequestByInput(String request) throws Exception
     {
@@ -170,7 +171,7 @@ public class ClientForGUI {
                     {
                         if(ch == '|')
                         {
-                            allFiles.append(", ");
+                            allFiles.append('\n');
                         }
                         else
                         {
