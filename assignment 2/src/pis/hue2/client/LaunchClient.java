@@ -13,6 +13,8 @@ public class LaunchClient
     private static String delFileName = "";
     private static String command;
 
+
+
     public static void main(String[] args) throws Exception
     {
         Socket socket = new Socket("localhost", PORT);
@@ -20,6 +22,10 @@ public class LaunchClient
         BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         BufferedReader keyboard = new BufferedReader(new InputStreamReader(System.in));
         PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+        // creates Thread and starts GUI
+        StartGUI startGUI = new StartGUI();
+        startGUI.start();
 
         boolean isRunning = true;
 
