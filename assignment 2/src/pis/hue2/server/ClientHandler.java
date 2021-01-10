@@ -2,12 +2,8 @@ package pis.hue2.server;
 
 import pis.hue2.fileSending.FileSender;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.Socket;
-import java.nio.channels.ScatteringByteChannel;
 import java.util.Arrays;
 
 public class ClientHandler implements Runnable
@@ -15,6 +11,10 @@ public class ClientHandler implements Runnable
     public Socket client;
     private BufferedReader in;
     private PrintWriter out;
+    private boolean accepted = false;
+    private final String filePath = "testFiles/server/";
+    private String getFileName = "";
+    private String delFileName = "";
 
     public  ClientHandler(Socket clientSocket)
     {
@@ -38,7 +38,60 @@ public class ClientHandler implements Runnable
             while (true)
             {
                 String request = in.readLine();
-                instruction(request);
+                if (!accepted)
+                {
+                    if (request.equals("CON"))
+                    {
+                        if (LaunchServer.getNumberOfClients() < 3)
+                        {
+                            out.println("ACK");
+                            LaunchServer.increaseNumberOfClients();
+                            accepted = true;
+                            System.out.println("Client accepted");
+                            System.out.println("Number of Clients: " + LaunchServer.getNumberOfClients());
+                        }
+                        else
+                        {
+                            out.println("DND");
+                            LaunchServer.decreaseNumberOfClients();
+                            System.out.println("DND: 3 Clients are already connected");
+                            closeSocket();
+                            System.out.println("Client disconnected");
+                        }
+                    }
+                    else
+                    {
+                        instruction("404");
+                    }
+                }
+                else
+                {
+                    if (request.contains("GET"))
+                    {
+                        StringBuilder getFile = new StringBuilder();
+                        for (char ch : request.substring(4).toCharArray())
+                        {
+                            getFile.append(ch);
+                        }
+                        getFileName = getFile.toString();
+                        instruction("GET");
+                    }
+
+                    else if (request.contains("DEL"))
+                    {
+                        StringBuilder delFile = new StringBuilder();
+                        for (char ch : request.substring(4).toCharArray())
+                        {
+                            delFile.append(ch);
+                        }
+                        delFileName = delFile.toString();
+                        instruction("DEL");
+                    }
+                    else
+                    {
+                        instruction(request);
+                    }
+                }
             }
         }
         catch (IOException e)
@@ -80,28 +133,6 @@ public class ClientHandler implements Runnable
         switch (instruction)
         {
             /*
-             * CONNECT
-             * connection request
-             * usage: CON
-             */
-            case "CON":
-                System.out.println("Number of Clients: " + LaunchServer.getNumberOfClients());
-                if (LaunchServer.getNumberOfClients() < 3)
-                {
-                    out.println("ACK");
-                    LaunchServer.increaseNumberOfClients();
-                    System.out.println("Client accepted");
-                }
-                else
-                {
-                    instruction("DND");
-                }
-
-
-                // send DND if unsuccessful
-                break;
-
-            /*
              * DISCONNECT
              * disconnect notification
              * usage: DSC
@@ -123,28 +154,38 @@ public class ClientHandler implements Runnable
                 System.out.println("ACK");
                 break;
 
-            /*
-             * DENIED
-             * negative operation acknowledgement
-             * usage: DND
-             */
-            case "DND":
-                out.println("DND");
-                LaunchServer.decreaseNumberOfClients();
-                System.out.println("DND: 3 Clients are already connected");
-                closeSocket();
-                System.out.println("Client disconnected");
-                break;
-
             /**
              * LIST
              * list a directory
              * usage: LST
              **/
             case "LST":
-                System.out.println("LST");
-                // send ACK
-                // wait for ACK
+                out.println("ACK");
+                try
+                {
+                    if(in.readLine().equals("ACK"))
+                    {
+                        File file = new File(filePath);
+                        String[] pathNames = file.list();
+
+                        String pathName = "";
+                        for(int i = 0; i < pathNames.length; i++)
+                        {
+                            pathName += pathNames[i] + "|";
+                        }
+
+                        out.println(pathName);
+                        if(in.readLine().equals("ACK"))
+                        {
+                            System.out.println("Send List of all Files");
+                        }
+                    }
+                }
+                catch (IOException e)
+                {
+                    System.out.println("IOException in LST");
+                }
+
                 // send DAT
                 // wait for ACK
                 break;
@@ -158,7 +199,7 @@ public class ClientHandler implements Runnable
                 out.println("ACK");
                 try
                 {
-                    FileSender fileSender = new FileSender("testFiles/server/", client);
+                    FileSender fileSender = new FileSender(filePath, client);
                     fileSender.receiveFile();
                     out.println("ACK");
                 }
@@ -181,12 +222,34 @@ public class ClientHandler implements Runnable
              * usage: GET <filename : string>
              */
             case "GET":
-                System.out.println("GET");
-                // send ACK
-                // wait for ACK
-                // send DAT
-                // wait for ACK
-                // send DND if unsuccessful
+                out.println("ACK");
+
+                try
+                {
+                    if(in.readLine().equals("ACK"))
+                    {
+                        FileSender fileSender = new FileSender(filePath + getFileName, client);
+                        fileSender.sendFile();
+                    }
+
+                    if(in.readLine().equals("ACK"))
+                    {
+                        System.out.println("The File Transfer was successful");
+                    }
+                    else if(in.readLine().equals("DND"))
+                    {
+                        System.out.println("File Transfer wasn't successful");
+                    }
+                    else
+                    {
+                        System.out.println("unknown command in put");
+                    }
+                }
+                catch (IOException e)
+                {
+                    System.out.println("IOException in GET");
+                }
+
                 break;
 
             /**
@@ -195,9 +258,20 @@ public class ClientHandler implements Runnable
              * usage: DEL <filename : string>
              */
             case "DEL":
-                System.out.println("DEL");
+                FileSender fileSender = new FileSender(filePath + delFileName, client);
+                if(fileSender.deleteFile())
+                {
+                    out.println("ACK");
+                }
+                else
+                {
+                    out.println("DND");
+                }
+
+//                delFileName
                 // send ACK if success
                 // send DND if unsuccessful
+//                out.println("DND");
                 break;
 
             /**

@@ -8,6 +8,10 @@ import java.net.*;
 public class LaunchClient
 {
     private static final int PORT = 42069;
+    private static final String filePath = "testFiles/client/";
+    private static String getFileName = "";
+    private static String delFileName = "";
+    private static String command;
 
     public static void main(String[] args) throws Exception
     {
@@ -25,7 +29,43 @@ public class LaunchClient
 
             // "command" should be your way of sending things to the server
             // keyboard.read line can be replaced and is only here for testing purposes
-            String command = keyboard.readLine();
+            command = keyboard.readLine();
+
+            if (command.contains("GET"))
+            {
+                try
+                {
+                    StringBuilder getFile = new StringBuilder();
+                    for (char ch : command.substring(4).toCharArray())
+                    {
+                        getFile.append(ch);
+                    }
+                    getFileName = getFile.toString();
+                    command = command.split(" ")[0];
+                }
+                catch (StringIndexOutOfBoundsException e)
+                {
+                    System.out.println("Must Specify the File in the Get Request");
+                }
+            }
+
+            if (command.contains("DEL"))
+            {
+                try
+                {
+                    StringBuilder delFile = new StringBuilder();
+                    for (char ch : command.substring(4).toCharArray())
+                    {
+                        delFile.append(ch);
+                    }
+                    delFileName = delFile.toString();
+                    command = command.split(" ")[0];
+                }
+                catch (StringIndexOutOfBoundsException e)
+                {
+                    System.out.println("Must Specify the File in the DEL Request");
+                }
+            }
 
             switch (command)
             {
@@ -45,7 +85,7 @@ public class LaunchClient
                     break;
 
                 case "DEL":
-                    out.println("DEL");
+                    out.println("DEL " + delFileName);
                     String serverResponseDEL = input.readLine();
                     if(serverResponseDEL.equals("ACK")){
                         System.out.println("Server: " + "Your delete request was accepted.");
@@ -71,15 +111,21 @@ public class LaunchClient
                     break;
 
                 case "GET":
-                    out.println("GET");
+                    out.println("GET " + getFileName);
                     String serverResponseGET = input.readLine();
                     if(serverResponseGET.equals("ACK")){
                         System.out.println("Server: " + "Your get request was accepted.");
                         out.println("ACK");
-                        String serverResponseGET2 = input.readLine();
-                        if(serverResponseGET2.equals("DAT")){
-                            // we get the data here
+                        try
+                        {
+                            FileSender fileSender = new FileSender(filePath, socket);
+                            fileSender.receiveFile();
                             out.println("ACK");
+                        }
+                        catch(Exception e)
+                        {
+                            out.println("DND");
+                            System.out.println("File Transfer went wrong");
                         }
                     }
                     else if(serverResponseGET.equals("DND")){
@@ -93,16 +139,28 @@ public class LaunchClient
                 case "LST":
                     out.println("LST");
                     String serverResponseLST = input.readLine();
-                    if(serverResponseLST.equals("ACK")){
-                        System.out.println("Server: " + "You can now ACK our ACK.");
+                    if(serverResponseLST.equals("ACK"))
+                    {
                         out.println("ACK");
-                        String serverResponseLST2 = input.readLine();
-                        if(serverResponseLST2.equals("DAT")){
-                            //we get the data here
-                            out.println("ACK");
+
+                        StringBuilder allFiles = new StringBuilder();
+                        for (char ch : input.readLine().toCharArray())
+                        {
+                            if(ch == '|')
+                            {
+                                allFiles.append('\n');
+                            }
+                            else
+                            {
+                                allFiles.append(ch);
+                            }
                         }
+                        System.out.println(allFiles.toString());
+
+                        out.println("ACK");
                     }
-                    else{
+                    else
+                    {
                         System.out.println("Server: " + "There was an error while trying to list the data.");
                     }
                     break;
@@ -113,7 +171,7 @@ public class LaunchClient
 
                     if(serverResponsePUT.equals("ACK"))
                     {
-                        FileSender fileSender = new FileSender("testFiles/client/test1.txt", socket);
+                        FileSender fileSender = new FileSender(filePath + "test1.txt", socket);
                         fileSender.sendFile();
                     }
 

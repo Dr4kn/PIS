@@ -80,33 +80,6 @@ public class FileSender
         }
     }
 
-
-//        try
-//        {
-//            int bytesRead;
-//
-//            DataInputStream clientData = new DataInputStream(client.getInputStream());
-//
-//            String fileName = clientData.readUTF();
-//            OutputStream output = new FileOutputStream(fileName);
-//            long size = clientData.readLong();
-//            byte[] buffer = new byte[1024];
-//            while (size > 0 && (bytesRead = clientData.read(buffer, 0, (int) Math.min(buffer.length, size))) != -1)
-//            {
-//                output.write(buffer, 0, bytesRead);
-//                size -= bytesRead;
-//            }
-//
-//            output.flush();
-//
-//            System.out.println("File " + fileName + " received");
-//        }
-//        catch (IOException e)
-//        {
-//            System.err.println("Client error. Connection closed.");
-//        }
-//    }
-
     public void sendFile()
     {
         try
@@ -135,5 +108,11 @@ public class FileSender
         {
             System.err.println("File does not exist!");
         }
+    }
+
+    public boolean deleteFile()
+    {
+        File file = new File(filepath);
+        return file.delete();
     }
 }
