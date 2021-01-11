@@ -1,47 +1,55 @@
-package pis.hue2.fileSending;
+package pis.hue2.common;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.Scanner;
+//import java.util.Scanner;
 
+/**
+ * used for the client and server to send and read files
+ * (GET | PUT | DEL)
+ */
 public class FileSender
 {
-    private String filepath;
-    private Socket client;
+    private final String filepath;
+    private final Socket client;
 
+    /**
+     * @param filepath the filepath including the file name
+     * @param client the socket that is connected to the other party
+     */
     public FileSender(String filepath, Socket client)
     {
         this.filepath = filepath;
         this.client = client;
     }
 
-    public void setFilepath(String filepath)
-    {
-        this.filepath = filepath;
-    }
+//    public String readFile()
+//    {
+//        File file = new File(filepath);
+//
+//        try
+//        {
+//            Scanner scanner = new Scanner(file);
+//            String fileContent = "";
+//
+//            while (scanner.hasNextLine())
+//            {
+//                fileContent += scanner.nextLine();
+//            }
+//            scanner.close();
+//            return fileContent;
+//        }
+//        catch (FileNotFoundException e)
+//        {
+//            return "404";
+//        }
+//    }
 
-    public String readFile()
-    {
-        File file = new File(filepath);
-
-        try
-        {
-            Scanner scanner = new Scanner(file);
-            String fileContent = "";
-
-            while (scanner.hasNextLine())
-            {
-                fileContent += scanner.nextLine();
-            }
-            scanner.close();
-            return fileContent;
-        }
-        catch (FileNotFoundException e)
-        {
-            return "404";
-        }
-    }
-
+    /**
+     * used to accept a file
+     * parameter should be set to your filepath only
+     * the correct file name is added automatically
+     */
     public void receiveFile()
     {
         try
@@ -55,10 +63,10 @@ public class FileSender
             File file = new File(filepath + fileName);
             FileOutputStream fileOutputStream = new FileOutputStream(file);
 
-            if (!file.exists())
-            {
-                file.createNewFile();
-            }
+//            if (!file.exists())
+//            {
+//                file.createNewFile();
+//            }
 
             long size = clientData.readLong();
             byte[] buffer = new byte[1024];
@@ -80,6 +88,10 @@ public class FileSender
         }
     }
 
+    /**
+     * needs full filepath
+     * and starts sending the file
+     */
     public void sendFile()
     {
         try
@@ -110,6 +122,9 @@ public class FileSender
         }
     }
 
+    /**
+     * @return true if file was deleted
+     */
     public boolean deleteFile()
     {
         File file = new File(filepath);

@@ -1,19 +1,15 @@
 package pis.hue2.client;
 
-import pis.hue2.fileSending.FileSender;
+import pis.hue2.common.FileSender;
 
 import java.io.*;
-import java.net.*;
 import java.net.Socket;
 
 public class RequestHandler
 {
     private static final int PORT = 42069;
     private static final String filePath = "testFiles/client/";
-    private static String getFileName = "";
-    private static String delFileName = "";
-    private static String putFileName = "";
-    private static String request;
+    private static String fileName = "";
 
     Socket socket = new Socket("localhost", PORT);
 
@@ -26,16 +22,12 @@ public class RequestHandler
     public String runRequestByInput(String request) throws Exception
     {
         String answer = "";
-        if (request.contains("GET"))
+        if (request.contains("GET") || request.contains("DEL") || request.contains("PUT"))
         {
             try
             {
-                StringBuilder getFile = new StringBuilder();
-                for (char ch : request.substring(4).toCharArray())
-                {
-                    getFile.append(ch);
-                }
-                getFileName = getFile.toString();
+                fileName = request.substring(request.indexOf("<") + 1,
+                        request.indexOf(":") - 1);
                 request = request.split(" ")[0];
             }
             catch (StringIndexOutOfBoundsException e)
@@ -44,62 +36,30 @@ public class RequestHandler
             }
         }
 
-        if (request.contains("DEL"))
-        {
-            try
-            {
-                StringBuilder delFile = new StringBuilder();
-                for (char ch : request.substring(4).toCharArray())
-                {
-                    delFile.append(ch);
-                }
-                delFileName = delFile.toString();
-                request = request.split(" ")[0];
-            }
-            catch (StringIndexOutOfBoundsException e)
-            {
-                System.out.println("Must Specify the File in the DEL Request");
-            }
-        }
-
-        if (request.contains("PUT"))
-        {
-            try
-            {
-                StringBuilder putFile = new StringBuilder();
-                for (char ch : request.substring(4).toCharArray())
-                {
-                    putFile.append(ch);
-                }
-                putFileName = putFile.toString();
-                request = request.split(" ")[0];
-            }
-            catch (StringIndexOutOfBoundsException e)
-            {
-                System.out.println("Must Specify the File in the PUT Request");
-            }
-        }
-
         switch (request)
         {
-            case "CON":
+            case "CON" -> {
                 out.println("CON");
                 String serverResponseCON = input.readLine();
-                if(serverResponseCON.equals("ACK")){
+                if (serverResponseCON.equals("ACK"))
+                {
                     answer = "Server: " + "Your connection was accepted.";
                 }
-                else if(serverResponseCON.equals("DND")){
+                else if (serverResponseCON.equals("DND"))
+                {
                     answer = "Server: " + "The server denied your request.";
                 }
-                else{
+                else
+                {
                     answer = "Server: " + "Didn't get your request.";
                 }
-                break;
-
-            case "DEL":
-                out.println("DEL " + delFileName);
+            }
+            case "DEL" -> {
+                out.println("DEL <" + fileName + " : string>");
+                fileName = "";
                 String serverResponseDEL = input.readLine();
-                if(serverResponseDEL.equals("ACK")){
+                if (serverResponseDEL.equals("ACK"))
+                {
                     answer = "Server: " + "Your delete request was accepted.";
                     out.println("ACK");
                     try
@@ -108,35 +68,39 @@ public class RequestHandler
                         fileSender.deleteFile();
                         out.println("ACK");
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         out.println("DND");
-                        answer =  "File Transfer went wrong";
+                        answer = "File Transfer went wrong";
                     }
                 }
-                else if(serverResponseDEL.equals("DND")){
+                else if (serverResponseDEL.equals("DND"))
+                {
                     answer = "Server: " + "There was an error trying to delete the file from the server.";
                 }
-                else{
+                else
+                {
                     answer = "Server: " + "Didn't get your request.";
                 }
-                break;
-
-            case "DSC":
+            }
+            case "DSC" -> {
                 out.println("DSC");
                 String serverResponseDSC = input.readLine();
-                if(serverResponseDSC.equals("DSC")){
+                if (serverResponseDSC.equals("DSC"))
+                {
                     answer = "Server: " + "You were disconnected successfully.";
                 }
-                else{
+                else
+                {
                     answer = "Server: " + "There was an error while trying to disconnect you.";
                 }
-                break;
-
-            case "GET":
-                out.println("GET " + getFileName);
+            }
+            case "GET" -> {
+                out.println("GET <" + fileName + " : string>");
+                fileName = "";
                 String serverResponseGET = input.readLine();
-                if(serverResponseGET.equals("ACK")){
+                if (serverResponseGET.equals("ACK"))
+                {
                     answer = "Server: " + "Your get request was accepted.";
                     out.println("ACK");
                     try
@@ -145,31 +109,32 @@ public class RequestHandler
                         fileSender.receiveFile();
                         out.println("ACK");
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         out.println("DND");
                         answer = "File Transfer went wrong";
                     }
                 }
-                else if(serverResponseGET.equals("DND")){
+                else if (serverResponseGET.equals("DND"))
+                {
                     answer = "Server: " + "There was an error trying to get the file from the server.";
                 }
-                else{
+                else
+                {
                     answer = "Server: " + "Didn't get your request.";
                 }
-                break;
-
-            case "LST":
+            }
+            case "LST" -> {
                 out.println("LST");
                 String serverResponseLST = input.readLine();
-                if(serverResponseLST.equals("ACK"))
+                if (serverResponseLST.equals("ACK"))
                 {
                     out.println("ACK");
 
                     StringBuilder allFiles = new StringBuilder();
                     for (char ch : input.readLine().toCharArray())
                     {
-                        if(ch == '|')
+                        if (ch == '|')
                         {
                             allFiles.append('\n');
                         }
@@ -186,32 +151,27 @@ public class RequestHandler
                 {
                     answer = "Server: " + "There was an error while trying to list the data.";
                 }
-                break;
-
-            case "PUT":
+            }
+            case "PUT" -> {
                 out.println("PUT");
                 String serverResponsePUT = input.readLine();
-
-                if(serverResponsePUT.equals("ACK"))
+                if (serverResponsePUT.equals("ACK"))
                 {
                     System.out.println("The File Transfer was successful");
-                    FileSender fileSender = new FileSender(filePath + putFileName, socket);
+                    FileSender fileSender = new FileSender(filePath + fileName, socket);
+                    fileName = "";
                     fileSender.sendFile();
                 }
-                else if(serverResponsePUT.equals("DND"))
+                else if (serverResponsePUT.equals("DND"))
                 {
                     answer = "File Transfer wasn't successful";
                 }
                 else
                 {
-                    answer =  "unknown command in put";
+                    answer = "unknown command in put";
                 }
-                break;
-
-            default:
-                answer = "Server didn't respond or you used a non existing command.";
-                break;
-
+            }
+            default -> answer = "Server didn't respond or you used a non existing command.";
         }
         return answer;
     }

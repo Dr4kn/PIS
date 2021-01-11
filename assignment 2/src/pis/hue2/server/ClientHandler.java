@@ -1,21 +1,32 @@
 package pis.hue2.server;
 
-import pis.hue2.fileSending.FileSender;
+import pis.hue2.common.FileSender;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.Arrays;
 
+/**
+ * The client talks to this part and server must recognise its commands
+ * acceptable commands would be:
+ * CON | connect
+ * DSC | disconnect
+ * LST | list Files
+ * PUT | upload File
+ * GET | download File
+ * DAT | sends bytes
+ */
 public class ClientHandler implements Runnable
 {
     public Socket client;
     private BufferedReader in;
     private PrintWriter out;
     private boolean accepted = false;
-    private final String filePath = "testFiles/server/";
-    private String getFileName = "";
-    private String delFileName = "";
+    private String fileName = "";
 
+    /**
+     * @param clientSocket a client that is already connected to one
+     */
     public  ClientHandler(Socket clientSocket)
     {
         try
@@ -30,6 +41,11 @@ public class ClientHandler implements Runnable
         }
     }
 
+    /**
+     * starts the Thread operation
+     * client must first connect with CON to send the other commands
+     * the other commands are also handled in here
+     */
     @Override
     public void run()
     {
@@ -40,6 +56,11 @@ public class ClientHandler implements Runnable
                 String request = in.readLine();
                 if (!accepted)
                 {
+                    /**
+                     * CONNECT
+                     * connection request
+                     * usage: CON
+                     */
                     if (request.equals("CON"))
                     {
                         if (LaunchServer.getNumberOfClients() < 3)
@@ -66,31 +87,20 @@ public class ClientHandler implements Runnable
                 }
                 else
                 {
-                    if (request.contains("GET"))
+                    if (request.contains("GET") || request.contains("DEL"))
                     {
-                        StringBuilder getFile = new StringBuilder();
-                        for (char ch : request.substring(4).toCharArray())
+                        try
                         {
-                            getFile.append(ch);
+                            fileName = request.substring(request.indexOf("<") + 1,
+                                    request.indexOf(":") - 1);
+                            request = request.split(" ")[0];
                         }
-                        getFileName = getFile.toString();
-                        instruction("GET");
-                    }
-
-                    else if (request.contains("DEL"))
-                    {
-                        StringBuilder delFile = new StringBuilder();
-                        for (char ch : request.substring(4).toCharArray())
+                        catch (StringIndexOutOfBoundsException e)
                         {
-                            delFile.append(ch);
+                            System.out.println("Must Specify the File in the Get Request");
                         }
-                        delFileName = delFile.toString();
-                        instruction("DEL");
                     }
-                    else
-                    {
-                        instruction(request);
-                    }
+                    instruction(request);
                 }
             }
         }
@@ -98,6 +108,7 @@ public class ClientHandler implements Runnable
         {
             System.err.println("IO exception in client handler");
             System.err.println(Arrays.toString(e.getStackTrace()));
+            LaunchServer.decreaseNumberOfClients();
         }
         finally
         {
@@ -114,6 +125,10 @@ public class ClientHandler implements Runnable
         }
     }
 
+    /**
+     * closes the socket when 3 clients are already connected
+     * or a DSC is send
+     */
     public void closeSocket()
     {
         out.close();
@@ -128,56 +143,61 @@ public class ClientHandler implements Runnable
         }
     }
 
+    /**
+     * @param instruction DSC, ACK, LST, PUT, GET, DAT are acceptable
+     */
     public void instruction(String instruction)
     {
+        String filePath = "testFiles/server/";
         switch (instruction)
         {
-            /*
+            /**
              * DISCONNECT
              * disconnect notification
              * usage: DSC
              */
-            case "DSC":
+            case "DSC" -> {
                 out.println("DSC");
                 closeSocket();
                 LaunchServer.decreaseNumberOfClients();
                 System.out.println("Client disconnected");
-                break;
+            }
 
-            /*
+            /**
              * ACKNOWLEDGED
              * operation acknowledgement
              * usage: ACK
              */
-            case "ACK":
+            case "ACK" -> {
                 out.println("ACK");
                 System.out.println("ACK");
-                break;
+            }
 
             /**
              * LIST
              * list a directory
              * usage: LST
              **/
-            case "LST":
+            case "LST" -> {
                 out.println("ACK");
                 try
                 {
-                    if(in.readLine().equals("ACK"))
+                    if (in.readLine().equals("ACK"))
                     {
                         File file = new File(filePath);
                         String[] pathNames = file.list();
 
-                        String pathName = "";
-                        for(int i = 0; i < pathNames.length; i++)
+                        StringBuilder pathName = new StringBuilder();
+                        assert pathNames != null;
+                        for (String name : pathNames)
                         {
-                            pathName += pathNames[i] + "|";
+                            pathName.append(name).append("|");
                         }
 
-                        pathName = (pathName == null || pathName.length() == 0) ? pathName : (pathName.substring(0, pathName.length() - 1));
+                        pathName = new StringBuilder(pathName.length() == 0 ? pathName.toString() : pathName.substring(0, pathName.length() - 1));
 
                         out.println(pathName);
-                        if(in.readLine().equals("ACK"))
+                        if (in.readLine().equals("ACK"))
                         {
                             System.out.println("Send List of all Files");
                         }
@@ -187,17 +207,14 @@ public class ClientHandler implements Runnable
                 {
                     System.out.println("IOException in LST");
                 }
-
-                // send DAT
-                // wait for ACK
-                break;
+            }
 
             /**
              * UPLOAD
              * upload a file
              * usage: PUT <filename : string>
              */
-            case "PUT":
+            case "PUT" -> {
                 out.println("ACK");
                 try
                 {
@@ -205,40 +222,34 @@ public class ClientHandler implements Runnable
                     fileSender.receiveFile();
                     out.println("ACK");
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     out.println("DND");
                     System.out.println("File Transfer went wrong");
                 }
-
-
-                // send ACK
-                // wait for DAT
-                // send ACK
-                // send DND if unsuccessful
-                break;
+            }
 
             /**
              * DOWNLOAD
              * download a file
              * usage: GET <filename : string>
              */
-            case "GET":
+            case "GET" -> {
                 out.println("ACK");
-
                 try
                 {
-                    if(in.readLine().equals("ACK"))
+                    if (in.readLine().equals("ACK"))
                     {
-                        FileSender fileSender = new FileSender(filePath + getFileName, client);
+                        FileSender fileSender = new FileSender(filePath + fileName, client);
+                        fileName = "";
                         fileSender.sendFile();
                     }
 
-                    if(in.readLine().equals("ACK"))
+                    if (in.readLine().equals("ACK"))
                     {
                         System.out.println("The File Transfer was successful");
                     }
-                    else if(in.readLine().equals("DND"))
+                    else if (in.readLine().equals("DND"))
                     {
                         System.out.println("File Transfer wasn't successful");
                     }
@@ -251,17 +262,17 @@ public class ClientHandler implements Runnable
                 {
                     System.out.println("IOException in GET");
                 }
-
-                break;
+            }
 
             /**
              * DELETE
              * delete a file
              * usage: DEL <filename : string>
              */
-            case "DEL":
-                FileSender fileSender = new FileSender(filePath + delFileName, client);
-                if(fileSender.deleteFile())
+            case "DEL" -> {
+                FileSender fileSender = new FileSender(filePath + fileName, client);
+                fileName = "";
+                if (fileSender.deleteFile())
                 {
                     out.println("ACK");
                 }
@@ -269,29 +280,23 @@ public class ClientHandler implements Runnable
                 {
                     out.println("DND");
                 }
-
-//                delFileName
-                // send ACK if success
-                // send DND if unsuccessful
-//                out.println("DND");
-                break;
+            }
 
             /**
              * DATA
              * encapsulates the data to be transmitted
              * usage: DAT <length : string (long)> <data : byte[]>
-//             */
-            case "DAT":
+             */
+            case "DAT" -> {
                 System.out.println("DAT");
-
                 out.println("DAT");
-                break;
+            }
 
-            default:
+            default -> {
                 out.println("404");
                 System.out.print(instruction);
                 System.out.println(" | Error: Command not recognised");
-                break;
+            }
         }
     }
 }

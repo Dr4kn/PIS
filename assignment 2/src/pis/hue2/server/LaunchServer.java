@@ -1,10 +1,6 @@
 package pis.hue2.server;
 
-import pis.hue2.fileSending.FileSender;
-
-import java.io.*;
 import java.net.*;
-import java.util.*;
 import java.util.concurrent.*;
 
 public class LaunchServer
@@ -12,35 +8,58 @@ public class LaunchServer
     private static final int PORT = 42069;
     private static int numberOfClients = 0;
 
-    private static final ArrayList<ClientHandler> clients = new ArrayList<>();
     private static final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
+    /**
+     * @param args
+     * @throws Exception
+     * opens a port at 42069 and waits for clients to connect
+     * if a client connects it starts a thread up so the client
+     * can talk to the server
+     */
     public static void main(String[] args) throws Exception
     {
         ServerSocket listener = new ServerSocket(PORT);
         System.out.println("Server is running");
-
-        while (true)
+        try
         {
-            Socket client = listener.accept();
-            System.out.println("Client connected");
-            ClientHandler clientThread = new ClientHandler(client);
+            while (true)
+            {
+                Socket client = listener.accept();
+                System.out.println("Client connected");
+                ClientHandler clientThread = new ClientHandler(client);
 
-            clients.add(clientThread);
-            executorService.execute(clientThread);
+                executorService.execute(clientThread);
+            }
+        }
+        catch(Exception e)
+        {
+            decreaseNumberOfClients();
+            System.out.println("exception in main");
         }
     }
 
+    /**
+     * @return number of clients currently on the server
+     */
     public static int getNumberOfClients()
     {
         return numberOfClients;
     }
 
+    /**
+     * should be used if a client is connected
+     * keeps track of the number of users connected
+     */
     public static void increaseNumberOfClients()
     {
         ++numberOfClients;
     }
 
+    /**
+     * should be used if a client is disconnected
+     * keeps track of the number of users connected
+     */
     public static void decreaseNumberOfClients()
     {
         --numberOfClients;

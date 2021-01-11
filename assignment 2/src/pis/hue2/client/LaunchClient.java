@@ -5,7 +5,5 @@ public class LaunchClient {
     {
         ClientGUI clientGUI = new ClientGUI();
         clientGUI.start();
-
-
     }
 }
