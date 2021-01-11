@@ -11,8 +11,8 @@ public class LaunchServer
     private static final ExecutorService executorService = Executors.newFixedThreadPool(4);
 
     /**
-     * @param args
-     * @throws Exception
+     * @param args arguments
+     * @throws Exception if the server isn't stopped properly
      * opens a port at 42069 and waits for clients to connect
      * if a client connects it starts a thread up so the client
      * can talk to the server

@@ -92,7 +92,7 @@ public class ClientHandler implements Runnable
                         try
                         {
                             fileName = request.substring(request.indexOf("<") + 1,
-                                    request.indexOf(":") - 1);
+                                    request.indexOf(": string>") - 1);
                             request = request.split(" ")[0];
                         }
                         catch (StringIndexOutOfBoundsException e)

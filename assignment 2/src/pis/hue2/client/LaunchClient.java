@@ -24,7 +24,7 @@ public class LaunchClient
 
     /**
      * starts the ClientGUI
-     * @param args
+     * @param args arguments
      */
     public static void main(String[] args)
     {
@@ -36,7 +36,7 @@ public class LaunchClient
     /**
      * @param request CON, GET + data, DEL + data, PUT + data, DSC, LST are acceptable
      * @return this method returns the answer from the server from a given request.
-     * @throws Exception
+     * @throws Exception if the request isn't properly written
      *
      */
     public String runRequestByInput(String request) throws Exception
@@ -50,7 +50,7 @@ public class LaunchClient
             try
             {
                 fileName = request.substring(request.indexOf("<") + 1,
-                        request.indexOf(":") - 1);
+                        request.indexOf(": string>") - 1);
                 request = request.split(" ")[0];
             }
             catch (StringIndexOutOfBoundsException e)
@@ -84,6 +84,7 @@ public class LaunchClient
                     answer = "Server: " + "Didn't get your request.";
                 }
             }
+
             /**
              * DEL request
              * deletes a file with "fileName" on the server and gives its answer
@@ -117,6 +118,7 @@ public class LaunchClient
                     answer = "Server: " + "Didn't get your request.";
                 }
             }
+
             /**
              * DSC request
              * disconnects this client and gives its answer
@@ -133,6 +135,7 @@ public class LaunchClient
                     answer = "Server: " + "There was an error while trying to disconnect you.";
                 }
             }
+
             /**
              * GET request
              * gets data from the server with "fileName" and gives its answer
@@ -166,6 +169,7 @@ public class LaunchClient
                     answer = "Server: " + "Didn't get your request.";
                 }
             }
+
             /**
              * LST request
              * lists all files on the server and gives its answer
@@ -198,6 +202,7 @@ public class LaunchClient
                     answer = "Server: " + "There was an error while trying to list the data.";
                 }
             }
+
             /**
              * PUT request
              * puts a file on the server with "fileName" and gives its answer
