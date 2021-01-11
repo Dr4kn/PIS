@@ -17,6 +17,9 @@ public class ClientGUI extends Thread
         sendInputField.addActionListener(new sendInputButtonClicked());
     }
 
+    /**
+     * runs the GUI of client (Thread)
+     */
     public void run()
     {
         JFrame frame = new JFrame("ClientGUI");
@@ -26,25 +29,28 @@ public class ClientGUI extends Thread
         frame.setVisible(true);
     }
 
-
-
-    RequestHandler client;
+    /**
+     * creates a LaunchClient
+     */
+    LaunchClient client;
     {
         try
         {
-            client = new RequestHandler();
+            client = new LaunchClient();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
 
+    /**
+     * uses LaunchClient to display the servers answer in the OutputTextArea
+     */
     private class sendInputButtonClicked implements ActionListener
     {
         @Override
         public void actionPerformed(ActionEvent e)
         {
-
             try
             {
                 OutputTextArea.setText(client.runRequestByInput(InputField.getText()));
@@ -55,7 +61,5 @@ public class ClientGUI extends Thread
             }
         }
     }
-
-
 
 }
