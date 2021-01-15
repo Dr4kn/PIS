@@ -5,7 +5,7 @@ import pis.hue2.common.FileSender;
 import java.io.*;
 import java.net.Socket;
 
-public class LaunchClient extends ClientGUI {
+public class LaunchClient {
     private static final int PORT = 42069;
     private static final String filePath = "testFiles/client/";
     private static String fileName = "";
