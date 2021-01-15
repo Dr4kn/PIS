@@ -8,7 +8,7 @@ public class LaunchServer
     private static final int PORT = 42069;
     private static int numberOfClients = 0;
 
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(4);
+    private static final ExecutorService executorService = Executors.newFixedThreadPool(10);
 
     /**
      * @param args arguments
@@ -27,14 +27,13 @@ public class LaunchServer
             {
                 Socket client = listener.accept();
                 System.out.println("Client connected");
-                ClientHandler clientThread = new ClientHandler(client);
+                ClientHandler clientHandler = new ClientHandler(client);
 
-                executorService.execute(clientThread);
+                executorService.execute(clientHandler);
             }
         }
         catch(Exception e)
         {
-            decreaseNumberOfClients();
             System.out.println("exception in main");
         }
     }

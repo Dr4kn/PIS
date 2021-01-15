@@ -5,8 +5,7 @@ import pis.hue2.common.FileSender;
 import java.io.*;
 import java.net.Socket;
 
-public class LaunchClient
-{
+public class LaunchClient extends ClientGUI {
     private static final int PORT = 42069;
     private static final String filePath = "testFiles/client/";
     private static String fileName = "";
@@ -42,16 +41,15 @@ public class LaunchClient
     public String runRequestByInput(String request) throws Exception
     {
         String answer = "";
-        /**
+        /*
          *  if request is a GET, DEL or PUT we get the filename from this method
          */
         if (request.contains("GET") || request.contains("DEL") || request.contains("PUT"))
         {
             try
             {
-                fileName = request.substring(request.indexOf("<") + 1,
-                        request.indexOf(": string>") - 1);
-                request = request.split(" ")[0];
+                fileName = request.substring(4, request.length());
+                request = request.substring(0, 3);
             }
             catch (StringIndexOutOfBoundsException e)
             {
@@ -59,7 +57,7 @@ public class LaunchClient
             }
         }
 
-        /**
+        /*
          * switch-case for all requests
          */
         switch (request)
@@ -85,12 +83,12 @@ public class LaunchClient
                 }
             }
 
-            /**
+            /*
              * DEL request
              * deletes a file with "fileName" on the server and gives its answer
              */
             case "DEL" -> {
-                out.println("DEL <" + fileName + " : string>");
+                out.println("DEL " + fileName);
                 fileName = "";
                 String serverResponseDEL = input.readLine();
                 if (serverResponseDEL.equals("ACK"))
@@ -119,7 +117,7 @@ public class LaunchClient
                 }
             }
 
-            /**
+            /*
              * DSC request
              * disconnects this client and gives its answer
              */
@@ -136,28 +134,31 @@ public class LaunchClient
                 }
             }
 
-            /**
+            /*
              * GET request
              * gets data from the server with "fileName" and gives its answer
              */
             case "GET" -> {
-                out.println("GET <" + fileName + " : string>");
+                out.println("GET " + fileName);
                 fileName = "";
                 String serverResponseGET = input.readLine();
                 if (serverResponseGET.equals("ACK"))
                 {
                     answer = "Server: " + "Your get request was accepted.";
                     out.println("ACK");
-                    try
+                    if (input.readLine().equals("DAT"))
                     {
-                        FileSender fileSender = new FileSender(filePath, socket);
-                        fileSender.receiveFile();
-                        out.println("ACK");
-                    }
-                    catch (Exception e)
-                    {
-                        out.println("DND");
-                        answer = "File Transfer went wrong";
+                        try
+                        {
+                            FileSender fileSender = new FileSender(filePath, socket);
+                            fileSender.receiveFile();
+                            out.println("ACK");
+                        }
+                        catch (Exception e)
+                        {
+                            out.println("DND");
+                            answer = "File Transfer went wrong";
+                        }
                     }
                 }
                 else if (serverResponseGET.equals("DND"))
@@ -170,7 +171,7 @@ public class LaunchClient
                 }
             }
 
-            /**
+            /*
              * LST request
              * lists all files on the server and gives its answer
              */
@@ -203,7 +204,7 @@ public class LaunchClient
                 }
             }
 
-            /**
+            /*
              * PUT request
              * puts a file on the server with "fileName" and gives its answer
              */
@@ -212,10 +213,11 @@ public class LaunchClient
                 String serverResponsePUT = input.readLine();
                 if (serverResponsePUT.equals("ACK"))
                 {
-                    System.out.println("The File Transfer was successful");
+                    out.println("DAT");
                     FileSender fileSender = new FileSender(filePath + fileName, socket);
                     fileName = "";
                     fileSender.sendFile();
+                    System.out.println("The File Transfer was successful");
                 }
                 else if (serverResponsePUT.equals("DND"))
                 {
@@ -231,7 +233,4 @@ public class LaunchClient
 
         return answer;
     }
-
-
-
 }

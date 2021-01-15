@@ -54,46 +54,38 @@ public class ClientHandler implements Runnable
             while (true)
             {
                 String request = in.readLine();
-                if (!accepted)
+                /*
+                 * CONNECT
+                 * connection request
+                 * usage: CON
+                 */
+                if (request.equals("CON") && !accepted)
                 {
-                    /**
-                     * CONNECT
-                     * connection request
-                     * usage: CON
-                     */
-                    if (request.equals("CON"))
+                    if (LaunchServer.getNumberOfClients() < 3)
                     {
-                        if (LaunchServer.getNumberOfClients() < 3)
-                        {
-                            out.println("ACK");
-                            LaunchServer.increaseNumberOfClients();
-                            accepted = true;
-                            System.out.println("Client accepted");
-                            System.out.println("Number of Clients: " + LaunchServer.getNumberOfClients());
-                        }
-                        else
-                        {
-                            out.println("DND");
-                            LaunchServer.decreaseNumberOfClients();
-                            System.out.println("DND: 3 Clients are already connected");
-                            closeSocket();
-                            System.out.println("Client disconnected");
-                        }
+                        out.println("ACK");
+                        LaunchServer.increaseNumberOfClients();
+                        accepted = true;
+                        System.out.println("Client accepted");
+                        System.out.println("Number of Clients: " + LaunchServer.getNumberOfClients());
                     }
                     else
                     {
-                        instruction("404");
+                        out.println("DND");
+                        LaunchServer.decreaseNumberOfClients();
+                        System.out.println("DND: 3 Clients are already connected");
+                        closeSocket();
+                        System.out.println("Client disconnected");
                     }
                 }
-                else
+                else if (accepted)
                 {
                     if (request.contains("GET") || request.contains("DEL"))
                     {
                         try
                         {
-                            fileName = request.substring(request.indexOf("<") + 1,
-                                    request.indexOf(": string>") - 1);
-                            request = request.split(" ")[0];
+                            fileName = request.substring(4, request.length());
+                            request = request.substring(0, 3);
                         }
                         catch (StringIndexOutOfBoundsException e)
                         {
@@ -102,13 +94,18 @@ public class ClientHandler implements Runnable
                     }
                     instruction(request);
                 }
+                else
+                {
+                    out.println("404");
+                }
             }
         }
         catch (IOException e)
         {
+            LaunchServer.decreaseNumberOfClients();
+            System.out.println("Test");
             System.err.println("IO exception in client handler");
             System.err.println(Arrays.toString(e.getStackTrace()));
-            LaunchServer.decreaseNumberOfClients();
         }
         finally
         {
@@ -151,7 +148,7 @@ public class ClientHandler implements Runnable
         String filePath = "testFiles/server/";
         switch (instruction)
         {
-            /**
+            /*
              * DISCONNECT
              * disconnect notification
              * usage: DSC
@@ -163,7 +160,7 @@ public class ClientHandler implements Runnable
                 System.out.println("Client disconnected");
             }
 
-            /**
+            /*
              * ACKNOWLEDGED
              * operation acknowledgement
              * usage: ACK
@@ -173,7 +170,7 @@ public class ClientHandler implements Runnable
                 System.out.println("ACK");
             }
 
-            /**
+            /*
              * LIST
              * list a directory
              * usage: LST
@@ -209,7 +206,7 @@ public class ClientHandler implements Runnable
                 }
             }
 
-            /**
+            /*
              * UPLOAD
              * upload a file
              * usage: PUT <filename : string>
@@ -218,9 +215,12 @@ public class ClientHandler implements Runnable
                 out.println("ACK");
                 try
                 {
-                    FileSender fileSender = new FileSender(filePath, client);
-                    fileSender.receiveFile();
-                    out.println("ACK");
+                    if (in.readLine().equals("DAT"))
+                    {
+                        FileSender fileSender = new FileSender(filePath, client);
+                        fileSender.receiveFile();
+                        out.println("ACK");
+                    }
                 }
                 catch (Exception e)
                 {
@@ -229,7 +229,7 @@ public class ClientHandler implements Runnable
                 }
             }
 
-            /**
+            /*
              * DOWNLOAD
              * download a file
              * usage: GET <filename : string>
@@ -240,6 +240,7 @@ public class ClientHandler implements Runnable
                 {
                     if (in.readLine().equals("ACK"))
                     {
+                        out.println("DAT");
                         FileSender fileSender = new FileSender(filePath + fileName, client);
                         fileName = "";
                         fileSender.sendFile();
@@ -264,7 +265,7 @@ public class ClientHandler implements Runnable
                 }
             }
 
-            /**
+            /*
              * DELETE
              * delete a file
              * usage: DEL <filename : string>
@@ -279,17 +280,8 @@ public class ClientHandler implements Runnable
                 else
                 {
                     out.println("DND");
+                    System.out.println("Server full Client disconnected");
                 }
-            }
-
-            /**
-             * DATA
-             * encapsulates the data to be transmitted
-             * usage: DAT <length : string (long)> <data : byte[]>
-             */
-            case "DAT" -> {
-                System.out.println("DAT");
-                out.println("DAT");
             }
 
             default -> {
