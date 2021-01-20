@@ -23,28 +23,6 @@ public class FileSender
         this.client = client;
     }
 
-//    public String readFile()
-//    {
-//        File file = new File(filepath);
-//
-//        try
-//        {
-//            Scanner scanner = new Scanner(file);
-//            String fileContent = "";
-//
-//            while (scanner.hasNextLine())
-//            {
-//                fileContent += scanner.nextLine();
-//            }
-//            scanner.close();
-//            return fileContent;
-//        }
-//        catch (FileNotFoundException e)
-//        {
-//            return "404";
-//        }
-//    }
-
     /**
      * used to accept a file
      * parameter should be set to your filepath only

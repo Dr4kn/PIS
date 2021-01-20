@@ -23,6 +23,7 @@ public class ClientHandler implements Runnable
     private PrintWriter out;
     private boolean accepted = false;
     private String fileName = "";
+    String filePath = "testFiles/server/";
 
     /**
      * @param clientSocket a client that is already connected to one
@@ -145,150 +146,173 @@ public class ClientHandler implements Runnable
      */
     public void instruction(String instruction)
     {
-        String filePath = "testFiles/server/";
         switch (instruction)
         {
-            /*
-             * DISCONNECT
-             * disconnect notification
-             * usage: DSC
-             */
             case "DSC" -> {
-                out.println("DSC");
-                closeSocket();
-                LaunchServer.decreaseNumberOfClients();
-                System.out.println("Client disconnected");
+                disconnect();
             }
-
-            /*
-             * ACKNOWLEDGED
-             * operation acknowledgement
-             * usage: ACK
-             */
             case "ACK" -> {
-                out.println("ACK");
-                System.out.println("ACK");
+                acknowledge();
             }
-
-            /*
-             * LIST
-             * list a directory
-             * usage: LST
-             **/
             case "LST" -> {
-                out.println("ACK");
-                try
-                {
-                    if (in.readLine().equals("ACK"))
-                    {
-                        File file = new File(filePath);
-                        String[] pathNames = file.list();
-
-                        StringBuilder pathName = new StringBuilder();
-                        assert pathNames != null;
-                        for (String name : pathNames)
-                        {
-                            pathName.append(name).append("|");
-                        }
-
-                        pathName = new StringBuilder(pathName.length() == 0 ? pathName.toString() : pathName.substring(0, pathName.length() - 1));
-
-                        out.println(pathName);
-                        if (in.readLine().equals("ACK"))
-                        {
-                            System.out.println("Send List of all Files");
-                        }
-                    }
-                }
-                catch (IOException e)
-                {
-                    System.out.println("IOException in LST");
-                }
+                listFiles();
             }
-
-            /*
-             * UPLOAD
-             * upload a file
-             * usage: PUT <filename : string>
-             */
             case "PUT" -> {
-                out.println("ACK");
-                try
-                {
-                    if (in.readLine().equals("DAT"))
-                    {
-                        FileSender fileSender = new FileSender(filePath, client);
-                        fileSender.receiveFile();
-                        out.println("ACK");
-                    }
-                }
-                catch (Exception e)
-                {
-                    out.println("DND");
-                    System.out.println("File Transfer went wrong");
-                }
+                sendFileToServer();
             }
-
-            /*
-             * DOWNLOAD
-             * download a file
-             * usage: GET <filename : string>
-             */
             case "GET" -> {
-                out.println("ACK");
-                try
-                {
-                    if (in.readLine().equals("ACK"))
-                    {
-                        out.println("DAT");
-                        FileSender fileSender = new FileSender(filePath + fileName, client);
-                        fileName = "";
-                        fileSender.sendFile();
-                    }
-
-                    if (in.readLine().equals("ACK"))
-                    {
-                        System.out.println("The File Transfer was successful");
-                    }
-                    else if (in.readLine().equals("DND"))
-                    {
-                        System.out.println("File Transfer wasn't successful");
-                    }
-                    else
-                    {
-                        System.out.println("unknown command in put");
-                    }
-                }
-                catch (IOException e)
-                {
-                    System.out.println("IOException in GET");
-                }
+                serverSendsFileToClient();
             }
-
-            /*
-             * DELETE
-             * delete a file
-             * usage: DEL <filename : string>
-             */
             case "DEL" -> {
-                FileSender fileSender = new FileSender(filePath + fileName, client);
-                fileName = "";
-                if (fileSender.deleteFile())
-                {
-                    out.println("ACK");
-                }
-                else
-                {
-                    out.println("DND");
-                    System.out.println("Server full Client disconnected");
-                }
+                deleteFile();
             }
-
             default -> {
                 out.println("404");
                 System.out.print(instruction);
                 System.out.println(" | Error: Command not recognised");
             }
+        }
+    }
+
+    /**
+     * DISCONNECT
+     * disconnect notification
+     * usage: DSC
+     */
+    private void disconnect()
+    {
+        out.println("DSC");
+        closeSocket();
+        LaunchServer.decreaseNumberOfClients();
+        System.out.println("Client disconnected");
+    }
+
+    /**
+     * ACKNOWLEDGED
+     * operation acknowledgement
+     * usage: ACK
+     */
+    private void acknowledge()
+    {
+        out.println("ACK");
+        System.out.println("ACK");
+    }
+
+    /**
+     * LIST
+     * list a directory
+     * usage: LST
+     **/
+    private void listFiles()
+    {
+        out.println("ACK");
+        try
+        {
+            if (in.readLine().equals("ACK"))
+            {
+                File file = new File(filePath);
+                String[] pathNames = file.list();
+
+                StringBuilder pathName = new StringBuilder();
+                assert pathNames != null;
+                for (String name : pathNames)
+                {
+                    pathName.append(name).append("|");
+                }
+
+                pathName = new StringBuilder(pathName.length() == 0 ? pathName.toString() : pathName.substring(0, pathName.length() - 1));
+
+                out.println(pathName);
+                if (in.readLine().equals("ACK"))
+                {
+                    System.out.println("Send List of all Files");
+                }
+            }
+        }
+        catch (IOException e)
+        {
+            System.out.println("IOException in LST");
+        }
+    }
+
+    /**
+     * UPLOAD
+     * upload a file
+     * usage: PUT <filename : string>
+     */
+    private void sendFileToServer()
+    {
+        out.println("ACK");
+        try
+        {
+            if (in.readLine().equals("DAT"))
+            {
+                FileSender fileSender = new FileSender(filePath, client);
+                fileSender.receiveFile();
+                out.println("ACK");
+            }
+        }
+        catch (Exception e)
+        {
+            out.println("DND");
+            System.out.println("File Transfer went wrong");
+        }
+    }
+
+    /**
+     * DOWNLOAD
+     * download a file
+     * usage: GET <filename : string>
+     */
+    public void serverSendsFileToClient()
+    {
+        out.println("ACK");
+        try
+        {
+            if (in.readLine().equals("ACK"))
+            {
+                out.println("DAT");
+                FileSender fileSender = new FileSender(filePath + fileName, client);
+                fileName = "";
+                fileSender.sendFile();
+            }
+
+            if (in.readLine().equals("ACK"))
+            {
+                System.out.println("The File Transfer was successful");
+            }
+            else if (in.readLine().equals("DND"))
+            {
+                System.out.println("File Transfer wasn't successful");
+            }
+            else
+            {
+                System.out.println("unknown command in put");
+            }
+        }
+        catch (IOException e)
+        {
+            System.out.println("IOException in GET");
+        }
+    }
+
+    /**
+     * DELETE
+     * delete a file
+     * usage: DEL <filename : string>
+     */
+    public void deleteFile()
+    {
+        FileSender fileSender = new FileSender(filePath + fileName, client);
+        fileName = "";
+        if (fileSender.deleteFile())
+        {
+            out.println("ACK");
+        }
+        else
+        {
+            out.println("DND");
+            System.out.println("Server full Client disconnected");
         }
     }
 }
